@@ -28,25 +28,47 @@
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm tm-admin-nav mb-3" aria-label="Admin">
                 <div class="container-fluid">
                     @* TODO: swap the text for the logo image once it is designed. *@
+                    @* TODO(B - S4 "[Web] Admin hub page"): the logo opens the Admin hub
+                       (maintenance start/stop, server refresh, exchange rate status, gold rate).
+                       Currently a "Coming soon" placeholder in AdminController.Index. *@
                     <a class="navbar-brand" asp-area="" asp-controller="Admin" asp-action="Index">Tibia<span class="tm-brand-accent">Marché</span><span class="tm-admin-tag">ADMIN</span></a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                             aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        @* Placeholder targets in AdminController until each real page exists. *@
                         <ul class="navbar-nav flex-grow-1">
                             <li class="nav-item">
+                                @* TODO(B - S4 "[Web] Admin: item list, edit, delete and price change"):
+                                   all items in a table with Edit and Delete, plus an "Add item" button
+                                   that opens J's S3 Add Item page. Currently a placeholder (AdminController.Items). *@
                                 <a class="nav-link @AdminActive("Items")" aria-current="@AdminCurrent("Items")" asp-area="" asp-controller="Admin" asp-action="Items">Items</a>
                             </li>
                             <li class="nav-item">
+                                @* TODO(B - S5 "[Web] Item requests: buyer form and admin table"):
+                                   one table of buyer requests, unique by item + server, with the total
+                                   for each. Currently a placeholder (AdminController.Requests). *@
                                 <a class="nav-link @AdminActive("Requests")" aria-current="@AdminCurrent("Requests")" asp-area="" asp-controller="Admin" asp-action="Requests">Requests</a>
                             </li>
                             <li class="nav-item">
+                                @* TODO(S7 "[Web] Admin: orders, sale alerts, mark delivered"):
+                                   Sold items waiting for in-game delivery (target: within 1 hour), grouped
+                                   by character, with "Mark delivered". Currently a placeholder (AdminController.Deliveries). *@
                                 <a class="nav-link @AdminActive("Deliveries")" aria-current="@AdminCurrent("Deliveries")" asp-area="" asp-controller="Admin" asp-action="Deliveries">Deliveries</a>
                             </li>
                             <li class="nav-item">
+                                @* TODO(J - S8 "Maintenance mode"): start and stop the daily maintenance
+                                   (Available and In Cart items become Maintenance, carts are emptied,
+                                   no orders while active). Currently a placeholder (AdminController.Maintenance). *@
                                 <a class="nav-link @AdminActive("Maintenance")" aria-current="@AdminCurrent("Maintenance")" asp-area="" asp-controller="Admin" asp-action="Maintenance">Maintenance</a>
+                            </li>
+                        </ul>
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                @* TODO(auth): link to the Account page (change password and email; no
+                                   currency section, admins work in CAD only). Log out lives on that page.
+                                   Set ViewData["AdminSection"] = "Account" there so this link highlights. *@
+                                <a class="nav-link @AdminActive("Account")" aria-current="@AdminCurrent("Account")" href="#">Account</a>
                             </li>
                         </ul>
                     </div>
@@ -55,8 +77,10 @@
         }
         else
         {
+            @* ===== Buyer / guest navbar ===== *@
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
                 <div class="container-fluid">
+                    @* Home page = the catalogue: every Available item, guests can browse. *@
                     <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Tibia<span class="tm-brand-accent">Marché</span></a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                             aria-expanded="false" aria-label="Toggle navigation">
@@ -65,10 +89,52 @@
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                         <ul class="navbar-nav flex-grow-1">
                             <li class="nav-item">
+                                @* TODO(J - Catalog): Home shows all Available items with search and
+                                   filters (vocation, level, price). *@
                                 <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
+                            <li class="nav-item">
+                                @* TODO(B - S5 "[Web] Item requests: buyer form and admin table"):
+                                   form to request an out-of-stock item (item name + server).
+                                   Guests get the login page first, then return here. *@
+                                <a class="nav-link" href="#">Request an item</a>
+                            </li>
                         </ul>
-                        @* TODO(auth): Login / Account / Log out links go here. *@
+                        <ul class="navbar-nav">
+                            @* TODO(auth): IsAuthenticated is always false until login exists,
+                               so only the guest links show for now. *@
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <li class="nav-item">
+                                    @* TODO(J - Cart): the buyer's cart (locked items, total in the buyer's
+                                       currency, checkout with a deliver-to character per item).
+                                       Optional: badge with the number of items. *@
+                                    <a class="nav-link" href="#">Cart</a>
+                                </li>
+                                <li class="nav-item">
+                                    @* TODO(auth + B - Account page): currency (saves right away, shows an
+                                       example converted price), change password, change email. *@
+                                    <a class="nav-link" href="#">Account</a>
+                                </li>
+                                <li class="nav-item">
+                                    @* TODO(auth - J S2): replace with a POST form (with antiforgery token)
+                                       that signs out, then returns to Home. Logging out must not be a GET link. *@
+                                    <a class="nav-link" href="#">Log out</a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item">
+                                    @* TODO(auth - J S2 "[Web] Auth: register, login, logout, guest browsing"):
+                                       login page. Pass returnUrl so the user goes back to the page they were on. *@
+                                    <a class="nav-link" href="#">Login</a>
+                                </li>
+                                <li class="nav-item">
+                                    @* TODO(auth - J S2): register page (email + password; new accounts are buyers). *@
+                                    <a class="nav-link" href="#">Register</a>
+                                </li>
+                            }
+                        </ul>
                     </div>
                 </div>
             </nav>
