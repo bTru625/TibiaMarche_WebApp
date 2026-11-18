@@ -10,26 +10,69 @@
     <link rel="stylesheet" href="~/TibiaMarche_WebApp.styles.css" asp-append-version="true" />
 </head>
 <body>
+    @{
+        // Admin pages get their own navbar (logo, Items, Requests, Deliveries,
+        // Maintenance); every other page gets the buyer navbar.
+        // TODO(auth): switch on the signed-in user's role instead, e.g.
+        //   User.Identity?.IsAuthenticated == true && User.IsInRole(Roles.Admin)
+        bool isAdmin = (ViewContext.RouteData.Values["controller"] as string) == "Admin";
+        // Each admin page sets ViewData["AdminSection"] so its link is highlighted.
+        string adminSection = ViewData["AdminSection"] as string ?? "";
+        string AdminActive(string section) => adminSection == section ? "active" : "";
+        string? AdminCurrent(string section) => adminSection == section ? "page" : null;
+    }
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TibiaMarche_WebApp</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+        @if (isAdmin)
+        {
+            @* ===== S4: admin navbar ===== *@
+            <nav class="navbar navbar-expand-sm navbar-toggleable-sm tm-admin-nav mb-3" aria-label="Admin">
+                <div class="container-fluid">
+                    @* TODO: swap the text for the logo image once it is designed. *@
+                    <a class="navbar-brand" asp-area="" asp-controller="Admin" asp-action="Index">Tibia<span class="tm-brand-accent">Marché</span><span class="tm-admin-tag">ADMIN</span></a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        @* Placeholder targets in AdminController until each real page exists. *@
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item">
+                                <a class="nav-link @AdminActive("Items")" aria-current="@AdminCurrent("Items")" asp-area="" asp-controller="Admin" asp-action="Items">Items</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @AdminActive("Requests")" aria-current="@AdminCurrent("Requests")" asp-area="" asp-controller="Admin" asp-action="Requests">Requests</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @AdminActive("Deliveries")" aria-current="@AdminCurrent("Deliveries")" asp-area="" asp-controller="Admin" asp-action="Deliveries">Deliveries</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @AdminActive("Maintenance")" aria-current="@AdminCurrent("Maintenance")" asp-area="" asp-controller="Admin" asp-action="Maintenance">Maintenance</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
+        }
+        else
+        {
+            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+                <div class="container-fluid">
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Tibia<span class="tm-brand-accent">Marché</span></a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                        <ul class="navbar-nav flex-grow-1">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            </li>
+                        </ul>
+                        @* TODO(auth): Login / Account / Log out links go here. *@
+                    </div>
+                </div>
+            </nav>
+        }
     </header>
     <div class="container">
         <main role="main" class="pb-3">

@@ -1,0 +1,14 @@
+@*
+    Placeholder for admin pages that are not built yet, so the admin navbar
+    never links to a 404. Rendered by AdminController.ComingSoon(...).
+    TODO: delete once every admin page exists.
+*@
+<div class="tm-coming-soon">
+    <h1>@ViewData["Title"]</h1>
+    <div class="card">
+        <div class="card-body">
+            <span class="tm-badge-rare">Coming in @ViewData["Sprint"]</span>
+            <p class="tm-coming-soon-text">@ViewData["Description"]</p>
+        </div>
+    </div>
+</div>
