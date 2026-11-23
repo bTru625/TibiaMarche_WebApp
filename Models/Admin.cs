@@ -10,7 +10,7 @@ namespace TibiaMarche_WebApp.Models
     {
         private List<Item> _items;
 
-        protected Admin(string id, string email) : base(id, email)
+        public Admin(string id, string email) : base(id, email)
         {
             _items = new List<Item>();
         }
@@ -20,21 +20,32 @@ namespace TibiaMarche_WebApp.Models
             _items = items;
         }
 
+        public override string Role
+        {
+            get { return Roles.Admin; }
+        }
+
         public List<Item> Items
         {
             get { return _items; }
             set { _items = value; }
         }
 
+        // check this function later
+
         public int GetGoldPaid(Item item)
         {
             return item.GoldPaid;
         }
 
+        //check this function later 
         public void SetGoldPaid(Item item, int goldPaid)
         {
             item.GoldPaid = goldPaid;
         }
+
+        
+
 
     }
 }

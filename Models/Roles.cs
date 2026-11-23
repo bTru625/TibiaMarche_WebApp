@@ -8,7 +8,7 @@ namespace TibiaMarche_WebApp.Models
     /// </summary>
     public static class Roles
     {
-        public const string Admin = "admin";
-        public const string Buyer = "buyer";
+        public const string Admin = "ADMIN";
+        public const string Buyer = "BUYER";
     }
 }

@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TibiaMarche_WebApp.Models;
 
 namespace TibiaMarche_WebApp.Controllers
 {
@@ -15,7 +17,8 @@ namespace TibiaMarche_WebApp.Controllers
     /// Admin navbar highlighting: every admin page sets ViewData["AdminSection"]
     /// to "Items", "Requests", "Deliveries" or "Maintenance".
     /// </summary>
-    // TODO(auth): lock this to admins once login exists: [Authorize(Roles = Roles.Admin)]
+    // Only admins: visitors go to the login page, buyers go back to Home (see Program.cs).
+    [Authorize(Roles = Roles.Admin)]
     public class AdminController : Controller
     {
         // TODO(B - S4 "[Web] Admin hub page"): replace with the real hub.
