@@ -23,7 +23,7 @@ namespace TibiaMarche_WebApp.Models
     };
 
         // 1 CAD = rate units of this currency. CAD itself is always 1.0.
-        // Concurrent: rates may be set from a background/Firestore callback and read by requests.
+        // Concurrent: rates are set by the exchange rate background service and read by requests.
         private static readonly ConcurrentDictionary<Currency, double> Rates =
             new(Enum.GetValues<Currency>().Select(c => new KeyValuePair<Currency, double>(c, 1.0)));
 
@@ -55,7 +55,7 @@ namespace TibiaMarche_WebApp.Models
             Rates[currency] = rateFromCAD;
         }
 
-        // Sets several rates at once, e.g. the map read from Firestore. CAD entries are ignored
+        // Sets several rates at once (ExchangeRateService.Apply, rates from Realtime Database). CAD entries are ignored
         // (Java's static Currency.setRates)
         public static void SetRates(IDictionary<Currency, double?> rates)
         {

@@ -4,6 +4,13 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Lets "dotnet user-secrets" store the Firebase service account key path outside the repo. -->
+    <UserSecretsId>8ebe81c3-ee6f-401f-acf7-6cb5e762e4e2</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Service account access tokens for the Realtime Database REST API. -->
+    <PackageReference Include="Google.Apis.Auth" Version="1.76.0" />
+  </ItemGroup>
 
 </Project>
