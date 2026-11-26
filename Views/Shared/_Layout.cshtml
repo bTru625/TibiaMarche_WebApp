@@ -70,17 +70,10 @@
                             </li>
                             <li class="nav-item">
                                 @* Log out is a POST form with an antiforgery token (logging out must not be a GET link).
-                                   TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Auth/Logout is J's one
+                                   TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Account/Logout is J's one
                                    and only Logout action; it clears the auth cookie and returns to Home. *@
-                                <form method="post" action="/Auth/Logout" asp-antiforgery="true" class="tm-nav-form">
+                                <form method="post" action="/Account/Logout" asp-antiforgery="true" class="tm-nav-form">
                                     <button type="submit" class="nav-link tm-nav-button">Log out</button>
-                                </form>
-                            </li>
-                            <li class="nav-item">
-                                @* Log out is a POST form (with antiforgery token), never a GET link.
-                                   It can move to the Account page once that page exists. *@
-                                <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="nav-link border-0 bg-transparent">Log out</button>
                                 </form>
                             </li>
                         </ul>
@@ -130,8 +123,6 @@
                             @* TODO(auth - J S2): CurrentUser is the signed-in cookie user. Until login exists it is
                                always signed out, except in Development with Dev:FallbackRole set. *@
                             @if (CurrentUser.IsAuthenticated)
-                        <ul class="navbar-nav">
-                            @if (User.Identity?.IsAuthenticated == true)
                             {
                                 <li class="nav-item">
                                     @* TODO(J - Cart): the buyer's cart (locked items, total in the buyer's
@@ -147,9 +138,9 @@
                                 </li>
                                 <li class="nav-item">
                                     @* Log out is a POST form with an antiforgery token (logging out must not be a GET link).
-                                       TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Auth/Logout is J's one
+                                       TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Account/Logout is J's one
                                        and only Logout action; it clears the auth cookie and returns to Home. *@
-                                    <form method="post" action="/Auth/Logout" asp-antiforgery="true" class="tm-nav-form">
+                                    <form method="post" action="/Account/Logout" asp-antiforgery="true" class="tm-nav-form">
                                         <button type="submit" class="nav-link tm-nav-button">Log out</button>
                                     </form>
                                 </li>
@@ -157,13 +148,13 @@
                             else
                             {
                                 <li class="nav-item">
-                                    @* TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Auth/Login is J's
+                                    @* TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Account/Login is J's
                                        login page. returnUrl is the page the guest is on (a local path only), so they come back to it. *@
-                                    <a class="nav-link" href="/Auth/Login?returnUrl=@returnUrl">Login</a>
+                                    <a class="nav-link" href="/Account/Login?returnUrl=@returnUrl">Login</a>
                                 </li>
                                 <li class="nav-item">
-                                    @* TODO(J - S2): /Auth/Register is J's register page (email + password; new accounts are buyers). *@
-                                    <a class="nav-link" href="/Auth/Register">Register</a>
+                                    @* TODO(J - S2): /Account/Register is J's register page (email + password; new accounts are buyers). *@
+                                    <a class="nav-link" href="/Account/Register">Register</a>
                                 </li>
                             }
                         </ul>
@@ -174,7 +165,7 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3">
-            @* One-time messages after a redirect ("Account created", "reset link was sent"...) *@
+            <partial name="_Flash" />
             @if (TempData["Message"] is string message)
             {
                 <div class="tm-alert tm-alert-success">@message</div>

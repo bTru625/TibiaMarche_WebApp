@@ -98,7 +98,7 @@ namespace TibiaMarche_WebApp.Services.Auth
     public class RequireRoleAttribute : ActionFilterAttribute
     {
         // TODO(J - S2): replace with the real login URL (Url.Action("Login", "Auth")) once it exists.
-        private const string LoginPath = "/Auth/Login";
+        private const string LoginPath = "/Account/Login";
 
         private readonly string? _role;
 

@@ -17,7 +17,7 @@ namespace TibiaMarche_WebApp.Controllers
     public class RequestController : Controller
     {
         // TODO(J - S2 "[Web] Auth"): replace with the real login URL (Url.Action("Login", "Auth")).
-        private const string LoginPath = "/Auth/Login";
+        private const string LoginPath = "/Account/Login";
 
         private readonly RequestRepository _requests;
         private readonly ItemRepository _items;
