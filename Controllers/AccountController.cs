@@ -22,7 +22,6 @@ namespace TibiaMarche_WebApp.Controllers
     /// TODO(J - S2): the cookie keeps the old email after an email change; rebuild the principal with
     /// J's helper, or ask the user to sign in again (a confirmation email must be clicked first anyway).
     /// </summary>
-    [RequireRole]
     public class AccountController : Controller
     {
         private readonly ICurrentUser _user;
@@ -30,25 +29,21 @@ namespace TibiaMarche_WebApp.Controllers
         private readonly IFirebaseAuthService _auth;
         private readonly ExchangeRateService _rates;
         private readonly ILogger<AccountController> _logger;
+        private readonly UserRepository _users;
 
         public AccountController(
             ICurrentUser user,
             IUserProfileService profiles,
             IFirebaseAuthService auth,
             ExchangeRateService rates,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            UserRepository users)
         {
             _user = user;
             _profiles = profiles;
             _auth = auth;
             _rates = rates;
             _logger = logger;
-        }
-        
-         private readonly UserRepository _users;
-
-        public AccountController(UserRepository users)
-        {
             _users = users;
         }
 
@@ -75,7 +70,7 @@ namespace TibiaMarche_WebApp.Controllers
                 return View(model);
             }
 
-            AuthResult result = await _users.LoginAsync(model.Email, model.Password);
+            TibiaMarche_WebApp.Services.AuthResult result = await _users.LoginAsync(model.Email, model.Password);
             if (!result.Success)
             {
                 ModelState.AddModelError(string.Empty, result.Error!);
@@ -116,7 +111,7 @@ namespace TibiaMarche_WebApp.Controllers
                 return View(model);
             }
 
-            AuthResult result = await _users.RegisterBuyerAsync(model.Email, model.Password);
+            TibiaMarche_WebApp.Services.AuthResult result = await _users.RegisterBuyerAsync(model.Email, model.Password);
             if (!result.Success)
             {
                 ModelState.AddModelError(string.Empty, result.Error!);
@@ -182,12 +177,14 @@ namespace TibiaMarche_WebApp.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
         }
 
+        [RequireRole]
         [HttpGet]
         public async Task<IActionResult> Index()
         {
             return View(await BuildModelAsync(null));
         }
 
+        [RequireRole]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> SetCurrency(Currency currency)
         {
@@ -215,6 +212,7 @@ namespace TibiaMarche_WebApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [RequireRole]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangePassword(string? oldPassword, string? newPassword, string? confirmPassword)
         {
@@ -232,12 +230,13 @@ namespace TibiaMarche_WebApp.Controllers
             }
             else
             {
-                AuthResult result = await _auth.ChangePasswordAsync(_user.Email!, oldPassword, newPassword);
+                TibiaMarche_WebApp.Services.Auth.AuthResult result = await _auth.ChangePasswordAsync(_user.Email!, oldPassword, newPassword);
                 TempData[result.Success ? "Message" : "Error"] = result.Message;
             }
             return RedirectToAction(nameof(Index));
         }
 
+        [RequireRole]
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ChangeEmail(string? password, string? newEmail)
         {
@@ -251,7 +250,7 @@ namespace TibiaMarche_WebApp.Controllers
             }
             else
             {
-                AuthResult result = await _auth.ChangeEmailAsync(_user.Email!, password, newEmail.Trim());
+                TibiaMarche_WebApp.Services.Auth.AuthResult result = await _auth.ChangeEmailAsync(_user.Email!, password, newEmail.Trim());
                 TempData[result.Success ? "Message" : "Error"] = result.Message;
             }
             return RedirectToAction(nameof(Index));
