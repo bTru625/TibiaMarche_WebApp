@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Firebase service account keys (never commit; store the path with dotnet user-secrets)
+*firebase-adminsdk*.json
+serviceAccount*.json

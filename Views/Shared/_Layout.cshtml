@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+﻿@inject TibiaMarche_WebApp.Services.Auth.ICurrentUser CurrentUser
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TibiaMarche_WebApp</title>
+    <title>@ViewData["Title"] - TibiMarché</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -19,34 +20,29 @@
         string adminSection = ViewData["AdminSection"] as string ?? "";
         string AdminActive(string section) => adminSection == section ? "active" : "";
         string? AdminCurrent(string section) => adminSection == section ? "page" : null;
+        // Where the guest Login link sends the user back to after logging in (a local path only).
+        string returnUrl = Uri.EscapeDataString(Context.Request.Path + Context.Request.QueryString);
     }
     <header>
         @if (isAdmin)
         {
-            @* ===== S4: admin navbar ===== *@
+            @* ===== S4: admin navbar. Three parts: page links | DEV role switcher (middle) | account links.
+               The two link lists share the free width equally (.tm-nav-side), which keeps the switcher in the middle. ===== *@
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm tm-admin-nav mb-3" aria-label="Admin">
                 <div class="container-fluid">
                     @* TODO: swap the text for the logo image once it is designed. *@
-                    @* TODO(B - S4 "[Web] Admin hub page"): the logo opens the Admin hub
-                       (maintenance start/stop, server refresh, exchange rate status, gold rate).
-                       Currently a "Coming soon" placeholder in AdminController.Index. *@
-                    <a class="navbar-brand" asp-area="" asp-controller="Admin" asp-action="Index">Tibia<span class="tm-brand-accent">Marché</span><span class="tm-admin-tag">ADMIN</span></a>
+                    @* The logo opens the admin start page: All Items (/Admin). *@
+                    <a class="navbar-brand" asp-area="" asp-controller="Admin" asp-action="Index">Tibi<span class="tm-brand-accent">Marché</span><span class="tm-admin-tag">ADMIN</span></a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                             aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        <ul class="navbar-nav flex-grow-1">
+                    <div class="navbar-collapse collapse d-sm-inline-flex">
+                        <ul class="navbar-nav tm-nav-side">
                             <li class="nav-item">
-                                @* TODO(B - S4 "[Web] Admin: item list, edit, delete and price change"):
-                                   all items in a table with Edit and Delete, plus an "Add item" button
-                                   that opens J's S3 Add Item page. Currently a placeholder (AdminController.Items). *@
-                                <a class="nav-link @AdminActive("Items")" aria-current="@AdminCurrent("Items")" asp-area="" asp-controller="Admin" asp-action="Items">Items</a>
+                                <a class="nav-link @AdminActive("Items")" aria-current="@AdminCurrent("Items")" asp-area="" asp-controller="Admin" asp-action="Index">Items</a>
                             </li>
                             <li class="nav-item">
-                                @* TODO(B - S5 "[Web] Item requests: buyer form and admin table"):
-                                   one table of buyer requests, unique by item + server, with the total
-                                   for each. Currently a placeholder (AdminController.Requests). *@
                                 <a class="nav-link @AdminActive("Requests")" aria-current="@AdminCurrent("Requests")" asp-area="" asp-controller="Admin" asp-action="Requests">Requests</a>
                             </li>
                             <li class="nav-item">
@@ -62,12 +58,23 @@
                                 <a class="nav-link @AdminActive("Maintenance")" aria-current="@AdminCurrent("Maintenance")" asp-area="" asp-controller="Admin" asp-action="Maintenance">Maintenance</a>
                             </li>
                         </ul>
-                        <ul class="navbar-nav">
+                        @* TODO(DEV ONLY - DELETE BEFORE RELEASE): developer role switcher (guest / user / admin).
+                           Delete this line, Views/Shared/_DevRoleSwitcher.cshtml, Controllers/DevRoleController.cs,
+                           wwwroot/js/dev-role.js, the .tm-dev-switch CSS, and the cookie branch in CurrentUser.cs. *@
+                        <partial name="_DevRoleSwitcher" />
+                        <ul class="navbar-nav tm-nav-side tm-nav-end">
                             <li class="nav-item">
-                                @* TODO(auth): link to the Account page (change password and email; no
-                                   currency section, admins work in CAD only). Log out lives on that page.
-                                   Set ViewData["AdminSection"] = "Account" there so this link highlights. *@
-                                <a class="nav-link @AdminActive("Account")" aria-current="@AdminCurrent("Account")" href="#">Account</a>
+                                @* Account page: change password and email (no currency section, admins work
+                                   in CAD only). *@
+                                <a class="nav-link @AdminActive("Account")" aria-current="@AdminCurrent("Account")" asp-area="" asp-controller="Account" asp-action="Index">Account</a>
+                            </li>
+                            <li class="nav-item">
+                                @* Log out is a POST form with an antiforgery token (logging out must not be a GET link).
+                                   TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Auth/Logout is J's one
+                                   and only Logout action; it clears the auth cookie and returns to Home. *@
+                                <form method="post" action="/Auth/Logout" asp-antiforgery="true" class="tm-nav-form">
+                                    <button type="submit" class="nav-link tm-nav-button">Log out</button>
+                                </form>
                             </li>
                             <li class="nav-item">
                                 @* Log out is a POST form (with antiforgery token), never a GET link.
@@ -83,60 +90,80 @@
         }
         else
         {
-            @* ===== Buyer / guest navbar ===== *@
+            @* ===== Buyer / guest navbar. Three parts: page links | DEV role switcher (middle) | account links.
+               Guest: logo, Login, Register only (no page links). Buyer: Home, Request an item | Cart, Account, Log out. ===== *@
             <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
                 <div class="container-fluid">
                     @* Home page = the catalogue: every Available item, guests can browse. *@
-                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Tibia<span class="tm-brand-accent">Marché</span></a>
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Tibi<span class="tm-brand-accent">Marché</span></a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                             aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                        <ul class="navbar-nav flex-grow-1">
+                    <div class="navbar-collapse collapse d-sm-inline-flex">
+                        @if (CurrentUser.IsAuthenticated)
+                        {
+                        <ul class="navbar-nav tm-nav-side">
                             <li class="nav-item">
                                 @* TODO(J - Catalog): Home shows all Available items with search and
                                    filters (vocation, level, price). *@
                                 <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
                             <li class="nav-item">
-                                @* TODO(B - S5 "[Web] Item requests: buyer form and admin table"):
-                                   form to request an out-of-stock item (item name + server).
-                                   Guests get the login page first, then return here. *@
-                                <a class="nav-link" href="#">Request an item</a>
+                                @* Request an out-of-stock item (item name + server). Guests fill it in,
+                                   then get the login page when they submit, and return here. *@
+                                <a class="nav-link" asp-area="" asp-controller="Request" asp-action="Index">Request an item</a>
                             </li>
                         </ul>
+                        }
+                        else
+                        {
+                            @* Guest: no page links (no Home, no Request an item). The empty list keeps the
+                               DEV switcher in the middle. *@
+                            <ul class="navbar-nav tm-nav-side"></ul>
+                        }
+                        @* TODO(DEV ONLY - DELETE BEFORE RELEASE): developer role switcher (guest / user / admin).
+                           Delete this line, Views/Shared/_DevRoleSwitcher.cshtml, Controllers/DevRoleController.cs,
+                           wwwroot/js/dev-role.js, the .tm-dev-switch CSS, and the cookie branch in CurrentUser.cs. *@
+                        <partial name="_DevRoleSwitcher" />
+                        <ul class="navbar-nav tm-nav-side tm-nav-end">
+                            @* TODO(auth - J S2): CurrentUser is the signed-in cookie user. Until login exists it is
+                               always signed out, except in Development with Dev:FallbackRole set. *@
+                            @if (CurrentUser.IsAuthenticated)
                         <ul class="navbar-nav">
                             @if (User.Identity?.IsAuthenticated == true)
                             {
                                 <li class="nav-item">
                                     @* TODO(J - Cart): the buyer's cart (locked items, total in the buyer's
-                                       currency, checkout with a deliver-to character per item).
+                                       currency, checkout with a deliver-to character per item). Placeholder until
+                                       the Cart page exists: make this a real link then.
                                        Optional: badge with the number of items. *@
-                                    <a class="nav-link" href="#">Cart</a>
+                                    <a class="nav-link disabled" aria-disabled="true" tabindex="-1" title="The cart is coming in a later sprint">Cart</a>
                                 </li>
                                 <li class="nav-item">
-                                    @* TODO(auth + B - Account page): currency (saves right away, shows an
-                                       example converted price), change password, change email. *@
-                                    <a class="nav-link" href="#">Account</a>
+                                    @* Account page: currency (saves right away, shows an example converted
+                                       price), change password, change email. *@
+                                    <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Index">Account</a>
                                 </li>
                                 <li class="nav-item">
-                                    @* Log out is a POST form (with antiforgery token), never a GET link. *@
-                                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                        <button type="submit" class="nav-link border-0 bg-transparent">Log out</button>
+                                    @* Log out is a POST form with an antiforgery token (logging out must not be a GET link).
+                                       TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Auth/Logout is J's one
+                                       and only Logout action; it clears the auth cookie and returns to Home. *@
+                                    <form method="post" action="/Auth/Logout" asp-antiforgery="true" class="tm-nav-form">
+                                        <button type="submit" class="nav-link tm-nav-button">Log out</button>
                                     </form>
                                 </li>
                             }
                             else
                             {
                                 <li class="nav-item">
-                                    @* Login page. returnUrl = the page they are on, so they come back to it. *@
-                                    <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Login"
-                                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)">Login</a>
+                                    @* TODO(J - S2 "[Web] Auth: register, login, logout, guest browsing"): /Auth/Login is J's
+                                       login page. returnUrl is the page the guest is on (a local path only), so they come back to it. *@
+                                    <a class="nav-link" href="/Auth/Login?returnUrl=@returnUrl">Login</a>
                                 </li>
                                 <li class="nav-item">
-                                    @* Register page (email + password; new accounts are buyers). *@
-                                    <a class="nav-link" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                                    @* TODO(J - S2): /Auth/Register is J's register page (email + password; new accounts are buyers). *@
+                                    <a class="nav-link" href="/Auth/Register">Register</a>
                                 </li>
                             }
                         </ul>
@@ -158,7 +185,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - TibiaMarche_WebApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - TibiMarché - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

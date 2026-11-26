@@ -1,0 +1,81 @@
+@model TibiaMarche_WebApp.Models.ViewModels.RequestFormViewModel
+@*
+    S5 Buyer "Request an item" (/Request). Click listeners: wwwroot/js/request-item.js.
+    The item box suggests items already in the catalogue (datalist) and also accepts any other name.
+    Guests can fill in the form; submitting sends them to Login and back here (RequestController).
+*@
+@inject TibiaMarche_WebApp.Services.Auth.ICurrentUser CurrentUser
+
+<h1>Request Item</h1>
+<hr />
+
+@if (Model.Submitted)
+{
+    <div class="tm-alert tm-alert-success" role="status">Thanks! Your request was sent. We'll email you if the item comes back.</div>
+}
+<div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+@if (!CurrentUser.IsAuthenticated)
+{
+    <div class="tm-alert" role="status">You can fill this in now. You'll be asked to log in when you press Submit.</div>
+}
+
+<div class="tm-request-layout">
+    <div class="card tm-request-preview" id="item-preview">
+        <div class="tm-request-image" id="item-preview-image"><span class="tm-muted" id="item-preview-placeholder">[Image]</span></div>
+        <div class="card-body">
+            <h2 class="h5 mb-0" id="item-preview-name">Your item</h2>
+        </div>
+    </div>
+
+    <form method="post" asp-controller="Request" asp-action="Index" id="request-form" novalidate>
+        <div class="mb-3">
+            <label asp-for="Input.ItemName" class="form-label">Item</label>
+            <input asp-for="Input.ItemName" class="form-control" id="item-input" list="known-items" maxlength="80"
+                   autocomplete="off" placeholder="Start typing an item name" />
+            <datalist id="known-items">
+                @foreach (var known in Model.KnownItems)
+                {
+                    <option value="@known.Name" data-img="@known.Img"></option>
+                }
+            </datalist>
+            <span asp-validation-for="Input.ItemName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.ServerName" class="form-label">Server</label>
+            <select asp-for="Input.ServerName" class="form-select" id="server-select">
+                <option value="">Select a server</option>
+                @foreach (var server in Model.Servers)
+                {
+                    <option value="@server" selected="@(Model.Input.ServerName == server)">@server</option>
+                }
+            </select>
+            <span asp-validation-for="Input.ServerName" class="text-danger"></span>
+        </div>
+
+        <fieldset class="mb-3">
+            <legend class="form-label fs-6">Notify me</legend>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="Input.UseAltEmail" id="notify-account" value="false" checked="@(!Model.Input.UseAltEmail)" />
+                <label class="form-check-label" for="notify-account">
+                    Send notification to @(string.IsNullOrEmpty(Model.AccountEmail) ? "my account email" : Model.AccountEmail)
+                </label>
+            </div>
+            <div class="form-check tm-alt-email-row">
+                <input class="form-check-input" type="radio" name="Input.UseAltEmail" id="notify-alt" value="true" checked="@Model.Input.UseAltEmail" />
+                <label class="form-check-label" for="notify-alt">Send to:</label>
+                <input asp-for="Input.AltEmail" type="email" class="form-control" id="alt-email-input" placeholder="Alternative Email"
+                       aria-label="Alternative email" disabled="@(!Model.Input.UseAltEmail)" />
+            </div>
+            <span asp-validation-for="Input.AltEmail" class="text-danger"></span>
+        </fieldset>
+
+        <button type="button" class="btn btn-primary" id="request-submit-btn">Submit</button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/request-item.js" asp-append-version="true"></script>
+}

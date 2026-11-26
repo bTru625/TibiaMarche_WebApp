@@ -1,0 +1,59 @@
+@model TibiaMarche_WebApp.Models.ViewModels.RequestListViewModel
+@*
+    S5 Admin requests table (/Admin/Requests): one row per item + server, with the number of open
+    requests and the date of the latest one. "Mark fulfilled" closes the whole group.
+    Click listeners: wwwroot/js/admin-requests.js.
+*@
+
+<h1>Item Requests</h1>
+<hr />
+
+@if (!Model.DatabaseConfigured)
+{
+    <div class="tm-alert tm-alert-danger" role="alert">
+        The database is not connected, so no requests can be shown. Set Firebase:ServiceAccountKeyPath with
+        <code>dotnet user-secrets</code>.
+    </div>
+}
+else if (Model.Groups.Count == 0)
+{
+    <p class="tm-muted">There are no open requests.</p>
+}
+else
+{
+    <table class="table table-striped tm-requests-table">
+        <thead>
+            <tr>
+                <th scope="col">Item</th>
+                <th scope="col">Server</th>
+                <th scope="col" class="text-end">Times requested</th>
+                <th scope="col">Latest request</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Groups.Count; i++)
+            {
+                var group = Model.Groups[i];
+                <tr>
+                    <td>@group.ItemName</td>
+                    <td>@group.ServerName</td>
+                    <td class="text-end">@group.Count</td>
+                    <td>@group.Latest.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-end">
+                        <form method="post" asp-controller="Admin" asp-action="RequestsFulfill" id="fulfill-@i" class="d-inline">
+                            <input type="hidden" name="itemName" value="@group.ItemName" />
+                            <input type="hidden" name="serverName" value="@group.ServerName" />
+                            <button type="button" class="btn btn-primary btn-sm" data-fulfill-form="fulfill-@i"
+                                    data-item-name="@group.ItemName" data-count="@group.Count">Mark fulfilled</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <script src="~/js/admin-requests.js" asp-append-version="true"></script>
+}

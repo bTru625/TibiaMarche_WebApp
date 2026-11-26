@@ -298,3 +298,84 @@ header .tm-admin-nav .nav-link.active {
 /* "Coming in sprint N" placeholder for admin pages not built yet */
 .tm-coming-soon { max-width: 560px; margin: 0 auto; }
 .tm-coming-soon-text { margin: 0.75rem 0 0; }
+
+/* ---------- Admin hub, item list/edit, requests, account (S3-S5) ---------- */
+.tm-page-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.tm-page-header h1 { margin: 0; }
+.tm-input-narrow { max-width: 11rem; }
+.tm-input-tiny { display: inline-block; width: 4.5rem; }
+
+/* Item list */
+.tm-items-table td, .tm-requests-table td { vertical-align: middle; }
+.tm-row-actions { text-align: right; white-space: nowrap; }
+.tm-row-actions .btn { margin-left: 0.25rem; }
+.tm-detail-row td { background-color: var(--tm-surface-alt); }
+.tm-detail { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem 3rem; }
+.tm-price-form { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-left: auto; }
+.tm-detail-row td { border-top: 0; }
+.tm-pagination .page-link { background-color: var(--tm-surface); border-color: var(--tm-border); color: var(--tm-blue); }
+.tm-pagination .page-item.active .page-link { background-color: var(--tm-btn-primary-bg); border-color: var(--tm-btn-primary-bg); color: var(--tm-btn-primary-fg); }
+.tm-pagination .page-item.disabled .page-link { color: var(--tm-text-muted); }
+
+/* Status chips (one class per Status value) */
+.tm-status {
+  font-family: var(--tm-font-display); font-size: 0.8em; font-weight: 600;
+  padding: 2px 8px; border-radius: 3px; border: 1px solid var(--tm-border-strong);
+  background-color: var(--tm-surface-alt); color: var(--tm-text);
+}
+.tm-status-available { border-color: var(--tm-success); color: var(--tm-success); }
+.tm-status-in_cart   { border-color: var(--tm-blue);    color: var(--tm-blue); }
+.tm-status-on_hold, .tm-status-maintenance { border-color: var(--tm-gold); color: var(--tm-gold-text); }
+.tm-status-sold, .tm-status-delivered { color: var(--tm-text-muted); }
+
+/* Edit item */
+.tm-status-line { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.tm-edit-layout { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 2rem; max-width: 60rem; }
+@media (max-width: 767.98px) { .tm-edit-layout { grid-template-columns: 1fr; } }
+.tm-readonly-value { font-family: var(--tm-font-display); font-size: 1.25rem; }
+.tm-calc-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+
+/* Request item */
+.tm-request-layout { display: grid; grid-template-columns: 16rem minmax(0, 1fr); gap: 1.5rem; max-width: 56rem; align-items: start; }
+@media (max-width: 767.98px) { .tm-request-layout { grid-template-columns: 1fr; } }
+.tm-request-image {
+  height: 9rem; display: flex; align-items: center; justify-content: center;
+  background-color: var(--tm-surface-alt); border-bottom: 1px solid var(--tm-border);
+}
+.tm-request-img { max-width: 100%; max-height: 100%; image-rendering: pixelated; }
+.tm-alt-email-row { display: flex; align-items: center; gap: 0.5rem; padding-left: 1.5em; }
+.tm-alt-email-row .form-check-input { margin-left: -1.5em; }
+.tm-alt-email-row .form-control { max-width: 22rem; }
+
+/* Account */
+.tm-account-layout { display: grid; gap: 1rem; max-width: 36rem; }
+
+/* ---------- DEVELOPER FEATURE ONLY: navbar role switcher ----------
+   TODO(DEV ONLY - DELETE BEFORE RELEASE): delete with Views/Shared/_DevRoleSwitcher.cshtml. */
+.tm-dev-switch {
+  border: 2px dashed var(--tm-danger);
+  border-radius: var(--tm-radius-card);
+  padding: 2px 8px;
+}
+.tm-dev-switch-label {
+  font-family: var(--tm-font-display);
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--tm-danger);
+  white-space: nowrap;
+}
+
+/* ---------- Navbar layout: page links | DEV role switcher | account links ---------- */
+/* On sm and wider the two link lists share the free width equally, so the switcher sits in the
+   middle of the bar and the account links are pushed to the right edge. On a phone the collapsed
+   menu stacks in the same order. */
+@media (min-width: 576px) {
+  header .navbar .tm-nav-side { flex: 1 1 0; }
+  header .navbar .tm-nav-end { justify-content: flex-end; }
+}
+
+/* Log out is a POST form, but it has to look like the other nav links. */
+.tm-nav-form { display: inline; margin: 0; }
+.tm-nav-button { cursor: pointer; text-align: left; }

@@ -1,0 +1,107 @@
+@model TibiaMarche_WebApp.Models.ViewModels.ItemEditViewModel
+@using TibiaMarche_WebApp.Models
+@*
+    S4 Edit Item (/Admin/ItemEdit/{id}). Click listeners: wwwroot/js/admin-item-edit.js.
+    Proposed editable fields (waiting for the project owner's yes): Level, Price, Gold paid.
+    Item and Server are shown read-only. In Cart, Sold and Delivered items cannot be edited.
+    TODO(J - S3 Add Item): the card says to reuse J's Add Item form. It does not exist yet; when it
+    does, move the shared fields into a partial and use it here.
+*@
+@{
+    var item = Model.Item;
+    var input = Model.Input;
+}
+
+<h1>Edit Item</h1>
+<hr />
+
+<div class="tm-status-line">
+    Status: <span class="tm-status tm-status-@item.Status.ToString().ToLowerInvariant()">@item.Status.DisplayName()</span>
+    @if (item.Status == Status.On_Hold)
+    {
+        <form method="post" asp-controller="Admin" asp-action="ItemRelease" id="release-form" class="d-inline">
+            <input type="hidden" name="id" value="@item.Id" />
+            <input type="hidden" name="returnTo" value="edit" />
+            <button type="button" class="btn btn-outline-secondary" id="hold-btn" data-submit-form="release-form">Release from hold</button>
+        </form>
+    }
+    else
+    {
+        <form method="post" asp-controller="Admin" asp-action="ItemHold" id="hold-form" class="d-inline">
+            <input type="hidden" name="id" value="@item.Id" />
+            <input type="hidden" name="returnTo" value="edit" />
+            <button type="button" class="btn btn-outline-secondary" id="hold-btn" data-submit-form="hold-form"
+                    disabled="@(item.Status != Status.Available)"
+                    title="@(item.Status == Status.Available ? "Keep this item out of the shop" : "Only an Available item can be put on hold")">Put on hold</button>
+        </form>
+    }
+</div>
+
+@if (Model.Locked)
+{
+    <div class="tm-alert tm-alert-danger" role="alert">@Model.LockReason</div>
+}
+
+<form method="post" asp-controller="Admin" asp-action="ItemEdit" id="edit-form" novalidate>
+    <input type="hidden" name="Input.Id" value="@item.Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="tm-edit-layout">
+        <div>
+            <div class="mb-3">
+                <div class="form-label">Item</div>
+                <div class="tm-readonly-value">@item.Name</div>
+            </div>
+            <div class="mb-3">
+                <div class="form-label">Server</div>
+                <div class="tm-readonly-value">@item.Server</div>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Level" class="form-label">Level</label>
+                <input asp-for="Input.Level" type="number" min="1" max="5000" step="1" class="form-control" id="level-input" disabled="@Model.Locked" />
+                <span asp-validation-for="Input.Level" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Price" class="form-label">Set price (CAD)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input asp-for="Input.Price" type="number" min="0.01" step="0.01" class="form-control" id="price-input" disabled="@Model.Locked" />
+                </div>
+                <span asp-validation-for="Input.Price" class="text-danger"></span>
+            </div>
+            <button type="button" class="btn btn-primary" id="save-btn" disabled="@Model.Locked">Save</button>
+            <button type="button" class="btn btn-outline-secondary" id="cancel-btn" data-url="@Url.Action("Index", "Admin")">Cancel</button>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-body" id="calculator" data-rate="@(Model.GoldRate?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" data-gold-unit="1000000">
+                    <div class="mb-3">
+                        <label asp-for="Input.GoldPaid" class="form-label">Gold paid</label>
+                        <input asp-for="Input.GoldPaid" type="number" min="0" step="1" class="form-control" id="gold-input" disabled="@Model.Locked" />
+                        <span asp-validation-for="Input.GoldPaid" class="text-danger"></span>
+                    </div>
+                    <hr />
+                    <div class="tm-calc-row">
+                        <span>Break even price</span>
+                        <strong id="break-even">n/a</strong>
+                    </div>
+                    <div class="tm-calc-row">
+                        <span><input type="number" min="0" step="1" value="10" id="profit-input" class="form-control tm-input-tiny" aria-label="Profit percent" /> % profit price</span>
+                        <strong id="profit-price">n/a</strong>
+                    </div>
+                    @if (Model.GoldRate == null)
+                    {
+                        <p class="tm-muted mt-2 mb-0">The gold rate is not set, so prices cannot be calculated.</p>
+                    }
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline-primary w-100 mt-3" id="check-btn">Check</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/admin-item-edit.js" asp-append-version="true"></script>
+}
