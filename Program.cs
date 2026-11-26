@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Options;
+using TibiaMarche_WebApp.Services.Auth;
+using TibiaMarche_WebApp.Services.Data;
 using TibiaMarche_WebApp.Services.ExchangeRates;
 using TibiaMarche_WebApp.Services.Firebase;
 
@@ -24,6 +26,16 @@ builder.Services.AddHttpClient(FrankfurterClient.HttpClientName, (services, http
 builder.Services.AddSingleton<FrankfurterClient>();
 builder.Services.AddSingleton<ExchangeRateService>();
 builder.Services.AddHostedService<ExchangeRateRefreshService>();
+
+// ===== Admin items, requests, account (B's cards) =====
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddSingleton<ItemRepository>();
+builder.Services.AddSingleton<RequestRepository>();
+builder.Services.AddSingleton<SettingsRepository>();
+builder.Services.AddSingleton<IUserProfileService, UserProfileService>();
+// TODO(B - S5 "Swap Account stubs..."): register the real Firebase Auth service instead of the stub.
+builder.Services.AddSingleton<IFirebaseAuthService, StubFirebaseAuthService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,10 @@
+@* Success / error banner. Controllers set TempData["Message"] or TempData["Error"]; rendered once in _Layout. *@
+@if (TempData["Message"] is string message)
+{
+    <div class="tm-alert tm-alert-success" role="status">@message</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="tm-alert tm-alert-danger" role="alert">@error</div>
+}
+<div id="tm-notice-area" aria-live="polite"></div>

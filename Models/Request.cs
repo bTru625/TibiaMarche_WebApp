@@ -15,6 +15,7 @@ namespace TibiaMarche_WebApp.Models
         private string? _buyerId;
         private DateTime _createdAt;
         private RequestStatus _status = RequestStatus.OPEN;
+        private string? _notifyEmail;
 
         // Parameterless constructor (model binding / Firestore)
         public Request()
@@ -65,6 +66,14 @@ namespace TibiaMarche_WebApp.Models
         {
             get { return _createdAt; }
             set { _createdAt = value; }
+        }
+
+        // Where to tell the buyer the item is back (account email or an alternative).
+        // TODO(J): add notifyEmail to docs/data-model.md so Android writes the same field.
+        public string? NotifyEmail
+        {
+            get { return _notifyEmail; }
+            set { _notifyEmail = value; }
         }
 
         public RequestStatus Status

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using TibiaMarche_WebApp.Models;
+using TibiaMarche_WebApp.Services.Auth;
 
 namespace TibiaMarche_WebApp.Controllers;
 
@@ -13,6 +14,9 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    // Home is the catalogue (guests and buyers). Admins are sent to All Items (/Admin).
+    // Privacy and Error stay open to everyone.
+    [BlockAdmin]
     public IActionResult Index()
     {
         return View();

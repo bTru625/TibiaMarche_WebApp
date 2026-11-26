@@ -1,0 +1,147 @@
+@model TibiaMarche_WebApp.Models.ViewModels.ItemListViewModel
+@using TibiaMarche_WebApp.Models
+@*
+    Admin start page (/Admin): All Items, built from the admin-items wireframe.
+    Row: Name | Server | Price | Status | Edit, Hold/Release, expand arrow.
+    Expanded row: Gold paid | Break even price | New price (CAD) + Update Price | Delete.
+    Click listeners: wwwroot/js/admin-items.js. Buttons never submit by themselves: the script checks
+    or confirms first, then submits the row's form (forms carry the antiforgery token).
+    The wireframe's "Maintenance" button is "Hold" here: holding an item is the On Hold status
+    (decided 2026-11-08); Maintenance is only the daily window.
+*@
+
+<div class="tm-page-header">
+    <h1>All Items</h1>
+    @* Decided 2026-11-18: the Items page has an "Add item" button (the navbar has no Add Item link). *@
+    <button type="button" class="btn btn-primary" id="add-item-btn">Add item</button>
+</div>
+<hr />
+
+@if (!Model.DatabaseConfigured)
+{
+    <div class="tm-alert tm-alert-danger" role="alert">
+        The database is not connected, so no items can be shown. Set Firebase:ServiceAccountKeyPath with
+        <code>dotnet user-secrets</code>.
+    </div>
+}
+else if (Model.TotalItems == 0)
+{
+    <p class="tm-muted">There are no items yet. Use "Add item" to list the first one.</p>
+}
+else
+{
+    @if (Model.GoldRateMissing)
+    {
+        @* TODO(B): the gold rate (settings/goldRate) has no page to set it now that the hub is gone.
+           Decide where the Admin edits it, then point this message there. *@
+        <div class="tm-alert" role="status">The gold rate is not set, so break-even prices show as "n/a".</div>
+    }
+
+    <table class="table tm-items-table">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Server</th>
+                <th scope="col">Price</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                var item = row.Item;
+                string lockTip = row.Locked ? row.LockReason : "";
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Server</td>
+                    <td>$ @item.Price.ToString("0.00") CAD</td>
+                    <td>@item.Status.DisplayName()</td>
+                    <td class="tm-row-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-edit-url="@Url.Action("ItemEdit", "Admin", new { id = item.Id })"
+                                disabled="@row.Locked" title="@lockTip">Edit</button>
+
+                        @if (item.Status == Status.On_Hold)
+                        {
+                            <form method="post" asp-controller="Admin" asp-action="ItemRelease" id="release-@item.Id" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-submit-form="release-@item.Id">Release</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" asp-controller="Admin" asp-action="ItemHold" id="hold-@item.Id" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <button type="button" class="btn btn-outline-secondary btn-sm" data-submit-form="hold-@item.Id"
+                                        disabled="@(item.Status != Status.Available)"
+                                        title="@(item.Status == Status.Available ? "Keep this item out of the shop" : (row.Locked ? row.LockReason : "Only an Available item can be put on hold"))">Hold</button>
+                            </form>
+                        }
+
+                        <button type="button" class="btn btn-outline-primary btn-sm tm-expand-btn" data-expand="detail-@item.Id"
+                                aria-expanded="false" aria-controls="detail-@item.Id" aria-label="Show gold paid and price update for @item.Name">&#9662;</button>
+                    </td>
+                </tr>
+                <tr id="detail-@item.Id" class="tm-detail-row" hidden>
+                    <td colspan="5">
+                        <div class="tm-detail">
+                            <div>
+                                <span class="tm-muted">Gold paid</span><br />
+                                <strong>@item.GoldPaid.ToString("N0") gp</strong>
+                            </div>
+                            <div>
+                                <span class="tm-muted">Break even price</span><br />
+                                <strong>@(row.BreakEven == null ? "n/a" : "$ " + row.BreakEven.Value.ToString("0.00") + " CAD")</strong>
+                            </div>
+                            <form method="post" asp-controller="Admin" asp-action="ItemPrice" id="price-@item.Id" class="tm-price-form" novalidate>
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <label for="price-input-@item.Id" class="form-label mb-0">New price (CAD)</label>
+                                <div class="input-group tm-input-narrow">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" step="0.01" min="0.01" name="price" id="price-input-@item.Id" class="form-control"
+                                           disabled="@row.Locked" title="@lockTip" />
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm" data-price-form="price-@item.Id" data-price-input="price-input-@item.Id"
+                                        disabled="@row.Locked" title="@lockTip">Update Price</button>
+                            </form>
+                            @* Delete is not in the wireframe, but the S4 card needs it; it lives here, out of the main row. *@
+                            <form method="post" asp-controller="Admin" asp-action="ItemDelete" id="delete-@item.Id" class="d-inline">
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <input type="hidden" name="page" value="@Model.Page" />
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-delete-form="delete-@item.Id" data-item-name="@item.Name"
+                                        disabled="@row.Locked" title="@lockTip">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Item pages">
+            <ul class="pagination justify-content-center tm-pagination">
+                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)" tabindex="@(Model.Page == 1 ? -1 : 0)">Previous</a>
+                </li>
+                @for (int p = 1; p <= Model.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Page ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@p" aria-current="@(p == Model.Page ? "page" : null)">@p</a>
+                    </li>
+                }
+                <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)" tabindex="@(Model.Page == Model.TotalPages ? -1 : 0)">Next</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
+
+@section Scripts {
+    <script src="~/js/admin-items.js" asp-append-version="true"></script>
+}

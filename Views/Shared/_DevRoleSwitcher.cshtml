@@ -1,0 +1,23 @@
+@*
+    DEVELOPER FEATURE ONLY: guest / user / admin switcher shown in the middle of both navbars (admin, and buyer/guest). Development environment only.
+    Click listeners: wwwroot/js/dev-role.js.
+    TODO(DEV ONLY - DELETE BEFORE RELEASE): delete this file and everything listed in DevRoleController.cs.
+*@
+@inject IWebHostEnvironment Environment
+@inject TibiaMarche_WebApp.Services.Auth.ICurrentUser CurrentUser
+@if (Environment.IsDevelopment())
+{
+    string current = !CurrentUser.IsAuthenticated ? "guest" : CurrentUser.IsAdmin ? "admin" : "buyer";
+
+    <form method="post" asp-controller="DevRole" asp-action="Set" id="dev-role-form" class="tm-dev-switch d-flex align-items-center justify-content-center gap-2 my-2 my-sm-0 mx-sm-3"
+          title="Developer feature: not part of the real app. Removed before release.">
+        <input type="hidden" name="role" id="dev-role-value" value="@current" />
+        <span class="tm-dev-switch-label">DEV: view as</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Developer role switcher">
+            <button type="button" class="btn @(current == "guest" ? "btn-primary" : "btn-outline-secondary")" data-dev-role="guest" aria-pressed="@(current == "guest" ? "true" : "false")">Guest</button>
+            <button type="button" class="btn @(current == "buyer" ? "btn-primary" : "btn-outline-secondary")" data-dev-role="buyer" aria-pressed="@(current == "buyer" ? "true" : "false")">User</button>
+            <button type="button" class="btn @(current == "admin" ? "btn-primary" : "btn-outline-secondary")" data-dev-role="admin" aria-pressed="@(current == "admin" ? "true" : "false")">Admin</button>
+        </div>
+    </form>
+    <script src="~/js/dev-role.js" asp-append-version="true"></script>
+}
