@@ -79,6 +79,89 @@ namespace TibiaMarche_WebApp.Services.Firebase
             await EnsureSuccessAsync(response, path, cancellationToken);
         }
 
+        /// <summary>Merges the given fields into the node at <paramref name="path"/> (HTTP PATCH). Other fields are kept.</summary>
+        public async Task PatchAsync<T>(string path, T fields, CancellationToken cancellationToken = default)
+        {
+            using HttpRequestMessage request = await CreateRequestAsync(HttpMethod.Patch, path, cancellationToken);
+            request.Content = new StringContent(JsonSerializer.Serialize(fields, JsonOptions), Encoding.UTF8, "application/json");
+
+            using HttpResponseMessage response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
+            await EnsureSuccessAsync(response, path, cancellationToken);
+        }
+
+        /// <summary>Adds a new child with a generated key under <paramref name="path"/> (HTTP POST) and returns that key.</summary>
+        public async Task<string> PushAsync<T>(string path, T value, CancellationToken cancellationToken = default)
+        {
+            using HttpRequestMessage request = await CreateRequestAsync(HttpMethod.Post, path, cancellationToken);
+            request.Content = new StringContent(JsonSerializer.Serialize(value, JsonOptions), Encoding.UTF8, "application/json");
+
+            using HttpResponseMessage response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
+            await EnsureSuccessAsync(response, path, cancellationToken);
+
+            using JsonDocument doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+            return doc.RootElement.GetProperty("name").GetString() ?? string.Empty;
+        }
+
+        /// <summary>Removes the node at <paramref name="path"/>.</summary>
+        public async Task DeleteAsync(string path, CancellationToken cancellationToken = default)
+        {
+            using HttpRequestMessage request = await CreateRequestAsync(HttpMethod.Delete, path, cancellationToken);
+            using HttpResponseMessage response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
+            await EnsureSuccessAsync(response, path, cancellationToken);
+        }
+
+        // ===== Conditional writes (the "transaction" for the one-of-a-kind rule) =====
+        // The REST API has no transactions. Instead: read the value together with its ETag, decide, then
+        // write with an If-Match header. If anyone changed the node in between, the server answers
+        // 412 Precondition Failed and the write is refused; the caller re-reads and retries.
+
+        /// <summary>Reads the value at <paramref name="path"/> together with its ETag (needed for the conditional writes).</summary>
+        public async Task<(T? Value, string? ETag)> GetWithETagAsync<T>(string path, CancellationToken cancellationToken = default)
+        {
+            using HttpRequestMessage request = await CreateRequestAsync(HttpMethod.Get, path, cancellationToken);
+            request.Headers.TryAddWithoutValidation("X-Firebase-ETag", "true");
+            using HttpResponseMessage response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
+            await EnsureSuccessAsync(response, path, cancellationToken);
+
+            string? etag = response.Headers.NonValidated.TryGetValues("ETag", out var values) ? values.ToString() : null;
+            string body = await response.Content.ReadAsStringAsync(cancellationToken);
+            T? value = string.IsNullOrWhiteSpace(body) || body.Trim() == "null"
+                ? default
+                : JsonSerializer.Deserialize<T>(body, JsonOptions);
+            return (value, etag);
+        }
+
+        /// <summary>Writes the value only if the node still has <paramref name="etag"/>. Returns false when it changed meanwhile.</summary>
+        public async Task<bool> PutIfMatchAsync<T>(string path, T value, string etag, CancellationToken cancellationToken = default)
+        {
+            using HttpRequestMessage request = await CreateRequestAsync(HttpMethod.Put, path, cancellationToken);
+            request.Headers.TryAddWithoutValidation("if-match", etag);
+            request.Content = new StringContent(JsonSerializer.Serialize(value, JsonOptions), Encoding.UTF8, "application/json");
+
+            using HttpResponseMessage response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.PreconditionFailed)
+            {
+                return false;
+            }
+            await EnsureSuccessAsync(response, path, cancellationToken);
+            return true;
+        }
+
+        /// <summary>Deletes the node only if it still has <paramref name="etag"/>. Returns false when it changed meanwhile.</summary>
+        public async Task<bool> DeleteIfMatchAsync(string path, string etag, CancellationToken cancellationToken = default)
+        {
+            using HttpRequestMessage request = await CreateRequestAsync(HttpMethod.Delete, path, cancellationToken);
+            request.Headers.TryAddWithoutValidation("if-match", etag);
+
+            using HttpResponseMessage response = await _httpClientFactory.CreateClient(HttpClientName).SendAsync(request, cancellationToken);
+            if (response.StatusCode == System.Net.HttpStatusCode.PreconditionFailed)
+            {
+                return false;
+            }
+            await EnsureSuccessAsync(response, path, cancellationToken);
+            return true;
+        }
+
         private async Task<HttpRequestMessage> CreateRequestAsync(HttpMethod method, string path, CancellationToken cancellationToken)
         {
             ITokenAccess credential = _credential.Value
