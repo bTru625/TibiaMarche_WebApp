@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace TibiaMarche_WebApp.Models
 {
-    public class User
+    public abstract class User
     {
         private readonly string _id;    // Firebase Authentication UID (never changes)
         private string _email;          // unique, acts as username
@@ -27,8 +27,11 @@ namespace TibiaMarche_WebApp.Models
             set { _email = value; }
         }
 
-        // todo Authentication functions
+        public abstract string Role { get; }
 
-        // todo class methods
+        public static string NormalizeEmail(string? email)
+        {
+            return email?.Trim().ToLowerInvariant() ?? string.Empty;
+        }
     }
 }

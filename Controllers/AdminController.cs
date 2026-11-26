@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RequestStatus = TibiaMarche_WebApp.Models.Request.RequestStatus;
 using TibiaMarche_WebApp.Models;
@@ -21,7 +22,10 @@ namespace TibiaMarche_WebApp.Controllers
     /// Every action needs the admin role, checked here in the server code ([RequireRole]), not only in
     /// the views. Every POST is protected by the antiforgery token (the form tag helper adds it).
     /// </summary>
-    [RequireRole(Roles.Admin)]
+    
+    // Only admins: visitors go to the login page, buyers go back to Home (see Program.cs).
+  [RequireRole(Roles.Admin)]  
+  [Authorize(Roles = Roles.Admin)]
     public class AdminController : Controller
     {
         private const int PageSize = 10;

@@ -29,6 +29,11 @@ namespace TibiaMarche_WebApp.Models
             set { _currency = value; }
         }
 
+        public override string Role
+        {
+            get { return Roles.Buyer; }
+        }
+
         public Cart? Cart
         {
             get { return _cart; }
